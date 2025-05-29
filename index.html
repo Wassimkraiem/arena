@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arène des Légendes</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="game-container">
+      <header>
+        <h1>🏛️ Arène des Légendes</h1>
+        <div id="game-info" class="hidden">
+          <div id="current-player">
+            Tour du joueur: <span id="player-name">-</span>
+          </div>
+          <div id="dice-container">
+            <img
+              id="dice"
+              src="assets/dice.png"
+              alt="Dé"
+              title="Lancer le dé"
+            />
+            <span id="dice-result"></span>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <div id="game-board" class="hidden">
+          <div id="arena-grid"></div>
+          <div id="game-controls">
+            <div id="actions">
+              <button id="move-btn" class="action-btn">Se déplacer</button>
+              <button id="attack-btn" class="action-btn">Attaquer</button>
+              <button id="special-btn" class="action-btn">
+                Pouvoir spécial
+              </button>
+              <button id="defend-btn" class="action-btn">Se défendre</button>
+              <button id="dodge-btn" class="action-btn ninja-only">
+                Esquiver
+              </button>
+            </div>
+            <div id="player-stats">
+              <div id="hp-display">
+                PV: <span id="current-hp">100</span>/100
+              </div>
+              <div id="special-cooldown">
+                Pouvoir: <span id="cooldown-timer">Prêt</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="game-log" class="hidden">
+          <h3>Journal de combat</h3>
+          <div id="log-entries"></div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Popup de sélection du nombre de joueurs -->
+    <div id="player-count-popup" class="popup">
+      <div class="popup-content">
+        <h2>🏛️ Bienvenue dans l'Arène des Légendes</h2>
+        <p>Jeu stratégique en tour par tour. Soyez le dernier survivant !</p>
+
+        <h3>Choisissez le nombre de joueurs :</h3>
+        <div class="player-count-options">
+          <button class="player-count-btn" data-count="2">2 Joueurs</button>
+          <button class="player-count-btn" data-count="3">3 Joueurs</button>
+          <button class="player-count-btn" data-count="4">4 Joueurs</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Popup de sélection du mode de jeu (4 joueurs) -->
+    <div id="game-mode-popup" class="popup hidden">
+      <div class="popup-content">
+        <h2>Mode de jeu (4 joueurs)</h2>
+        <p>Choisissez votre mode de jeu :</p>
+
+        <div class="game-mode-options">
+          <div class="mode-card" data-mode="individual">
+            <h4>⚔️ Individuel</h4>
+            <p>Chacun pour soi - Bataille royale</p>
+          </div>
+          <div class="mode-card" data-mode="duo">
+            <h4>👥 Duo</h4>
+            <p>2 vs 2 - Combat en équipe</p>
+            <small>(Disponible prochainement)</small>
+          </div>
+        </div>
+        <button id="confirm-mode" disabled>Confirmer le mode</button>
+      </div>
+    </div>
+
+    <!-- Popup de sélection des héros -->
+    <div id="hero-selection-popup" class="popup hidden">
+      <div class="popup-content">
+        <h2>Sélection des héros</h2>
+        <div id="current-player-selection">
+          <h3>Tour de <span id="selecting-player">Joueur 1</span></h3>
+          <p>Choisissez votre héros :</p>
+        </div>
+
+        <div class="heroes-grid">
+          <div class="hero-card" data-hero="chevalier">
+            <img src="assets/chevalier.png" alt="Chevalier" />
+            <h4>Chevalier</h4>
+            <p><strong>Forces:</strong> Résistant, bon au corps-à-corps</p>
+            <p><strong>Faiblesses:</strong> Lent</p>
+            <p><strong>Pouvoir:</strong> Cri de guerre (+dégâts)</p>
+            <div class="hero-availability">
+              Disponible: <span class="available-count">2</span>/2
+            </div>
+          </div>
+          <div class="hero-card" data-hero="ninja">
+            <img src="assets/ninja.png" alt="Ninja" />
+            <h4>Ninja</h4>
+            <p><strong>Forces:</strong> Rapide, peut esquiver</p>
+            <p><strong>Faiblesses:</strong> Fragile</p>
+            <p><strong>Pouvoir:</strong> Double attaque rapide</p>
+            <div class="hero-availability">
+              Disponible: <span class="available-count">2</span>/2
+            </div>
+          </div>
+          <div class="hero-card" data-hero="sorcier">
+            <img src="assets/sorcier.png" alt="Sorcier" />
+            <h4>Sorcier</h4>
+            <p><strong>Forces:</strong> Attaque magique à distance</p>
+            <p><strong>Faiblesses:</strong> Défense très faible</p>
+            <p><strong>Pouvoir:</strong> Tempête magique (zone)</p>
+            <div class="hero-availability">
+              Disponible: <span class="available-count">2</span>/2
+            </div>
+          </div>
+        </div>
+        <button id="confirm-hero" disabled>Confirmer le choix</button>
+      </div>
+    </div>
+
+    <!-- Popup de lancer de dés pour l'ordre -->
+    <div id="dice-order-popup" class="popup hidden">
+      <div class="popup-content">
+        <h2>Détermination de l'ordre de jeu</h2>
+        <p>Chaque joueur lance le dé. Le plus haut score commence !</p>
+
+        <div id="dice-rolling-area">
+          <div id="current-roller">
+            <h3>Tour de <span id="rolling-player">Joueur 1</span></h3>
+            <div class="dice-roll-section">
+              <img
+                id="order-dice"
+                src="assets/dice.png"
+                alt="Dé"
+                class="large-dice"
+              />
+              <button id="roll-for-order">Lancer le dé</button>
+              <div id="roll-result" class="roll-result"></div>
+            </div>
+          </div>
+
+          <div id="dice-results">
+            <h4>Résultats :</h4>
+            <div id="results-list"></div>
+          </div>
+        </div>
+
+        <button id="start-game-btn" class="hidden">Commencer la partie</button>
+      </div>
+    </div>
+
+    <!-- Popup de nouveau tour -->
+    <div id="new-round-popup" class="popup hidden">
+      <div class="popup-content">
+        <h2>🔄 Nouveau tour</h2>
+        <p>
+          Tous les joueurs ont joué ! Relancez les dés pour déterminer le nouvel
+          ordre.
+        </p>
+        <button id="start-new-round">Lancer les dés</button>
+      </div>
+    </div>
+
+    <!-- Popup de message -->
+    <div id="message-popup" class="popup hidden">
+      <div class="popup-content">
+        <h3 id="message-title"></h3>
+        <p id="message-text"></p>
+        <button id="message-ok">OK</button>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="scripts/player.js"></script>
+    <script type="module" src="scripts/arena.js"></script>
+    <script type="module" src="scripts/ui.js"></script>
+    <script type="module" src="scripts/game.js"></script>
+    <script type="module" src="scripts/main.js"></script>
+  </body>
+</html>
