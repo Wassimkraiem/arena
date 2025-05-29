@@ -12,6 +12,7 @@ class Player {
     this.canAttackDiagonal = false;
     this.canMoveBeforeAttack = false;
     this.moveBeforeAttackRange = 0;
+    this.defenseValue = 0;
 
     // Caractéristiques selon le type de héros
     this.setHeroStats();
@@ -80,8 +81,9 @@ class Player {
     let actualDamage = damage;
 
     if (this.isDefending) {
-      actualDamage = Math.max(1, damage - this.defense);
+      actualDamage = Math.max(0, damage - this.defenseValue);
       this.isDefending = false;
+      this.defenseValue = 0;
     }
 
     this.hp = Math.max(0, this.hp - actualDamage);
@@ -92,8 +94,9 @@ class Player {
     this.hp = Math.min(this.maxHp, this.hp + amount);
   }
 
-  defend() {
+  defend(defenseValue) {
     this.isDefending = true;
+    this.defenseValue = defenseValue;
   }
 
   useSpecial() {

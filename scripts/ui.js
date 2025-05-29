@@ -7,9 +7,116 @@ class UI {
     this.selectedPlayerCount = 0;
     this.selectedGameMode = null;
     this.activePlayerHighlight = null;
+    this.gameLog = document.getElementById("game-log");
+    this.logEntries = document.getElementById("log-entries");
 
     this.initializeElements();
     this.bindEvents();
+    this.setupConsoleOverride();
+  }
+
+  setupConsoleOverride() {
+    // Override console.log to only display game actions in the game log
+    const originalConsoleLog = console.log;
+    console.log = (...args) => {
+      // Call original console.log
+      originalConsoleLog.apply(console, args);
+      
+      // Only add to game log if it's a movement or attack
+      const message = args.join(' ');
+      if (message.includes('🚶') || message.includes('⚔️') || message.includes('💀')) {
+        this.addLogEntry(message);
+      }
+    };
+  }
+
+  isGameAction(message) {
+    // Define action-related emojis and keywords
+    const actionIndicators = [
+      '⚔️', // Attack
+      '🚶', // Move
+      '✨', // Special
+      '🛡️', // Defend
+      '💨', // Dodge
+      '🎲', // Dice roll
+      '💀', // Death
+      '🏆', // Victory
+      '🔄', // Turn change
+      '🎯', // Target
+      '⚡', // Special attack
+      '🌪️', // Area effect
+      'attaque',
+      'déplacement',
+      'pouvoir',
+      'défense',
+      'esquive',
+      'dé',
+      'tour',
+      'cible',
+      'victoire',
+      'défaite'
+    ];
+
+    return actionIndicators.some(indicator => 
+      message.toLowerCase().includes(indicator.toLowerCase())
+    );
+  }
+
+  addLogEntry(message) {
+    if (!this.logEntries) return;
+
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    
+    // Add timestamp
+    const now = new Date();
+    const time = now.toLocaleTimeString();
+    
+    // Format the message with emojis and styling
+    const formattedMessage = this.formatLogMessage(message);
+    
+    entry.innerHTML = `<span class="log-time">[${time}]</span> ${formattedMessage}`;
+    
+    // Add to the top of the log
+    this.logEntries.insertBefore(entry, this.logEntries.firstChild);
+    
+    // Keep only the last 50 entries
+    while (this.logEntries.children.length > 50) {
+      this.logEntries.removeChild(this.logEntries.lastChild);
+    }
+  }
+
+  formatLogMessage(message) {
+    // Replace emoji codes with actual emojis
+    const emojiMap = {
+      '👥': '👥',
+      '🎮': '🎮',
+      '🦸': '🦸',
+      '🎲': '🎲',
+      '⚔️': '⚔️',
+      '🚶': '🚶',
+      '🎯': '🎯',
+      '✨': '✨',
+      '🛡️': '🛡️',
+      '💨': '💨',
+      '🖱️': '🖱️',
+      '⚡': '⚡',
+      '🌪️': '🌪️',
+      '💀': '💀',
+      '🏆': '🏆',
+      '🔄': '🔄',
+      '❌': '❌',
+      '✅': '✅',
+      'ℹ️': 'ℹ️',
+      '🚫': '🚫'
+    };
+
+    let formattedMessage = message;
+    Object.entries(emojiMap).forEach(([code, emoji]) => {
+      formattedMessage = formattedMessage.replace(code, emoji);
+    });
+
+    return formattedMessage;
   }
 
   initializeElements() {
@@ -48,7 +155,7 @@ class UI {
   }
 
   addActivePlayerStyle() {
-    // Ajouter le style CSS pour le joueur actif s'il n'existe pas déjà
+    // Add the style CSS for the active player if it doesn't exist already
     if (!document.getElementById("active-player-style")) {
       const style = document.createElement("style");
       style.id = "active-player-style";
@@ -82,6 +189,13 @@ class UI {
         
         .player-turn-indicator.fade-out {
           opacity: 0;
+        }
+
+        @keyframes fadeInOut {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+          10% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          90% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
         }
       `;
       document.head.appendChild(style);
@@ -475,6 +589,7 @@ class UI {
   showGameBoard() {
     if (this.gameBoard) this.gameBoard.classList.remove("hidden");
     if (this.gameInfo) this.gameInfo.classList.remove("hidden");
+    if (this.gameLog) this.gameLog.classList.remove("hidden");
     console.log("🎮 Plateau de jeu affiché");
   }
 
@@ -777,28 +892,52 @@ class UI {
   }
 
   showMessage(title, text, callback = null) {
-    const titleElement = document.getElementById("message-title");
-    const textElement = document.getElementById("message-text");
-
-    if (titleElement) titleElement.textContent = title;
-    if (textElement) textElement.textContent = text;
-
-    const messageOkBtn = document.getElementById("message-ok");
-    if (messageOkBtn) {
-      // Supprimer les anciens event listeners
-      const newBtn = messageOkBtn.cloneNode(true);
-      messageOkBtn.parentNode.replaceChild(newBtn, messageOkBtn);
-
-      newBtn.addEventListener("click", () => {
-        this.hideMessage();
-        if (callback) {
-          callback();
-        }
-      });
+    // Check if it's an attack or special power message
+    if (title.toLowerCase().includes('pouvoir spécial') || 
+        title.toLowerCase().includes('special power') ||
+        text.toLowerCase().includes('pouvoir spécial') ||
+        text.toLowerCase().includes('special power') ||
+        title.toLowerCase().includes('attaque') ||
+        title.toLowerCase().includes('attack') ||
+        text.toLowerCase().includes('attaque') ||
+        text.toLowerCase().includes('attack')) {
+      // Create a temporary alert element
+      const alertDiv = document.createElement('div');
+      alertDiv.style.position = 'fixed';
+      alertDiv.style.top = '50%';
+      alertDiv.style.left = '50%';
+      alertDiv.style.transform = 'translate(-50%, -50%)';
+      alertDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+      alertDiv.style.color = '#fff';
+      alertDiv.style.padding = '20px';
+      alertDiv.style.borderRadius = '10px';
+      alertDiv.style.zIndex = '1000';
+      alertDiv.style.textAlign = 'center';
+      alertDiv.style.minWidth = '300px';
+      alertDiv.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.5)';
+      alertDiv.style.animation = 'fadeInOut 3s ease-in-out';
+      
+      // Add the message content
+      alertDiv.innerHTML = `
+        <h3 style="color: #4a90e2; margin-bottom: 10px;">${title}</h3>
+        <p>${text}</p>
+      `;
+      
+      // Add the element to the document
+      document.body.appendChild(alertDiv);
+      
+      // Remove the element after 3 seconds
+      setTimeout(() => {
+        alertDiv.remove();
+        if (callback) callback();
+      }, 3000);
+      
+      return;
     }
 
-    this.showSection(this.messageArea);
-    console.log(`💬 Message affiché: ${title}`);
+    // For all other messages, just log them and execute callback if exists
+    console.log(`${title}: ${text}`);
+    if (callback) callback();
   }
 
   hideMessage() {
@@ -888,6 +1027,16 @@ class UI {
         callback();
       }
     }, 1000);
+  }
+
+  highlightPlusZone(zone) {
+    this.clearHighlights();
+    zone.forEach(cell => {
+      const cellElement = this.getCellElement(cell.row, cell.col);
+      if (cellElement) {
+        cellElement.classList.add('plus-zone');
+      }
+    });
   }
 }
 

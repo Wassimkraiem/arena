@@ -53,8 +53,6 @@ class Game {
 
   handlePlayerCountSelection(count) {
     this.playerCount = count;
-    console.log(`👥 Nombre de joueurs sélectionné: ${count}`);
-
     if (count === 4) {
       this.ui.showGameModeSelection();
     } else {
@@ -65,8 +63,6 @@ class Game {
 
   handleGameModeSelection(mode) {
     this.gameMode = mode;
-    console.log(`🎮 Mode de jeu sélectionné: ${mode}`);
-
     if (mode === "duo") {
       this.ui.showMessage(
         "Mode non disponible",
@@ -74,7 +70,6 @@ class Game {
       );
       return;
     }
-
     this.startHeroSelection();
   }
 
@@ -82,8 +77,6 @@ class Game {
     this.gameState = "selecting-heroes";
     this.currentSelectingPlayer = 0;
     this.selectedHeroes = [];
-    console.log("🦸 Début de la sélection des héros");
-
     this.ui.showHeroSelection(1, this.heroAvailability);
   }
 
@@ -102,15 +95,11 @@ class Game {
     });
 
     this.heroAvailability[heroType]--;
-    console.log(`🦸 Joueur ${this.currentSelectingPlayer + 1} a choisi: ${heroType}`);
-
     this.currentSelectingPlayer++;
 
     if (this.currentSelectingPlayer < this.playerCount) {
-      // Show hero selection for next player
       this.ui.showHeroSelection(this.currentSelectingPlayer + 1, this.heroAvailability);
     } else {
-      // All players have selected their heroes
       this.showHeroSelectionSummary();
     }
   }
@@ -122,8 +111,6 @@ class Game {
       const playerName = `Joueur ${selection.playerIndex + 1}`;
       summaryText += `${playerName}: ${selection.heroType}\n`;
     });
-
-    console.log("📋 Résumé des sélections:", this.selectedHeroes);
 
     this.ui.showMessage("Héros sélectionnés", summaryText, () => {
       this.createPlayers();
@@ -141,13 +128,11 @@ class Game {
       const playerName = `Joueur ${i + 1}`;
       const player = new Player(playerName, heroChoice.heroType, null);
       this.players.push(player);
-      console.log(`👤 Créé: ${player.name} (${player.heroType})`);
     }
 
     this.placePlayersOnArena();
     this.ui.createArenaGrid();
     this.ui.updateArenaDisplay(this.arena);
-
     this.establishClockwiseOrder();
   }
 
@@ -164,8 +149,6 @@ class Game {
         const pos = cornerPositions[i];
         this.arena.addPlayer(this.players[i], pos.row, pos.col);
       }
-
-      console.log("📍 Placement des 4 joueurs dans les coins de l'arène");
     } else {
       const availablePositions = this.generateRandomPositions();
 
@@ -174,18 +157,9 @@ class Game {
           Math.random() * availablePositions.length
         );
         const pos = availablePositions[randomIndex];
-
         availablePositions.splice(randomIndex, 1);
-
         this.arena.addPlayer(this.players[i], pos.row, pos.col);
-        console.log(
-          `📍 ${this.players[i].name} placé en position (${pos.row}, ${pos.col})`
-        );
       }
-
-      console.log(
-        `📍 Placement aléatoire de ${this.playerCount} joueurs dans l'arène`
-      );
     }
   }
 
@@ -285,32 +259,14 @@ class Game {
     this.diceResults = [];
     this.currentRollingPlayer = 0;
     this.tiedPlayersList = [];
-
-    console.log(
-      `🎲 Début de la détermination de l'ordre - Tour ${this.roundNumber}`
-    );
     this.ui.showDiceOrderSection(this.players[0].name);
   }
 
   handleDiceRollForOrder(result) {
-    console.log(
-      `🎲 Gestion du lancer de dé - Joueur ${this.currentRollingPlayer}, Résultat: ${result}`
-    );
-
-    if (this.currentRollingPlayer >= this.players.length) {
-      console.error(
-        `❌ Index invalide: ${this.currentRollingPlayer} >= ${this.players.length}`
-      );
-      return;
-    }
+    if (this.currentRollingPlayer >= this.players.length) return;
 
     const currentPlayer = this.players[this.currentRollingPlayer];
-    if (!currentPlayer) {
-      console.error(
-        `❌ Joueur non trouvé à l'index: ${this.currentRollingPlayer}`
-      );
-      return;
-    }
+    if (!currentPlayer) return;
 
     this.diceResults.push({
       playerIndex: this.currentRollingPlayer,
@@ -318,28 +274,19 @@ class Game {
       result: result,
     });
 
-    console.log(`📊 Résultat ajouté: ${currentPlayer.name} = ${result}`);
     this.ui.updateDiceResults(this.diceResults);
-
     this.currentRollingPlayer++;
 
     if (this.currentRollingPlayer < this.players.length) {
       const nextPlayer = this.players[this.currentRollingPlayer];
       if (nextPlayer) {
-        console.log(`➡️ Passage au joueur suivant: ${nextPlayer.name}`);
-
         setTimeout(() => {
           this.ui.showNextPlayerRoll(nextPlayer.name);
         }, 1000);
       } else {
-        console.error(
-          `❌ Joueur suivant non trouvé à l'index: ${this.currentRollingPlayer}`
-        );
         this.determinePlayOrder();
       }
     } else {
-      console.log("🏁 Tous les joueurs ont lancé les dés");
-
       setTimeout(() => {
         this.determinePlayOrder();
       }, 1000);
@@ -347,25 +294,15 @@ class Game {
   }
 
   determinePlayOrder() {
-    console.log("🏆 Détermination de l'ordre de jeu...");
-    
-    // Trier d'abord par résultat du dé (décroissant)
-    // En cas d'égalité, trier par ordre de lancement (croissant)
     this.diceResults.sort((a, b) => {
       if (b.result !== a.result) {
         return b.result - a.result;
       }
-      // En cas d'égalité, le joueur qui a lancé en premier (index plus petit) gagne
       return a.playerIndex - b.playerIndex;
     });
 
-    // Plus besoin de gérer les égalités car l'ordre est maintenant déterminé
     this.currentTurnFirstPlayer = this.diceResults[0].playerIndex;
     this.currentPlayerIndex = this.currentTurnFirstPlayer;
-
-    console.log(
-      `🥇 Premier joueur du tour ${this.roundNumber}: ${this.diceResults[0].playerName} (index: ${this.currentTurnFirstPlayer})`
-    );
 
     this.ui.showFinalOrder(this.diceResults, () =>
       this.ui.triggerGameStart()
@@ -375,30 +312,21 @@ class Game {
   startActualGame() {
     this.gameState = "playing";
     this.playersWhoPlayed = [];
-    console.log(`🚀 Début du tour ${this.roundNumber}!`);
     this.startTurn();
   }
 
   startNewRound() {
     this.roundNumber++;
     this.playersWhoPlayed = [];
-    console.log(
-      `🔄 Nouveau tour ${this.roundNumber} - Lancement des dés pour déterminer l'ordre`
-    );
-
     this.startOrderDetermination();
   }
 
   startTurn() {
     const currentPlayer = this.getCurrentPlayer();
 
-    if (!currentPlayer) {
-      console.error("❌ Aucun joueur actuel trouvé");
-      return;
-    }
+    if (!currentPlayer) return;
 
     if (!currentPlayer.isAlive()) {
-      console.log(`💀 ${currentPlayer.name} est mort, passage au suivant`);
       this.nextPlayer();
       return;
     }
@@ -407,7 +335,6 @@ class Game {
 
     setTimeout(() => {
       if (currentPlayer.name.includes("PC")) {
-        console.log(`🤖 Tour de l'IA: ${currentPlayer.name}`);
         this.ui.startPlayerTurn(currentPlayer);
         this.ui.disablePlayerInteractions();
 
@@ -415,7 +342,6 @@ class Game {
           this.playAITurn();
         }, this.actionDelay);
       } else {
-        console.log(`👤 Tour du joueur humain: ${currentPlayer.name}`);
         this.ui.startPlayerTurn(currentPlayer);
         this.ui.enablePlayerInteractions();
       }
@@ -425,8 +351,6 @@ class Game {
   handleActionSelection(action) {
     this.selectedAction = action;
     const currentPlayer = this.getCurrentPlayer();
-
-    console.log(`🎯 Action sélectionnée: ${action} par ${currentPlayer.name}`);
 
     switch (action) {
       case "move":
@@ -451,7 +375,6 @@ class Game {
     const accessibleCells = this.arena.getAccessibleCells(player);
 
     if (accessibleCells.length === 0) {
-      console.log("❌ Aucune case accessible pour le déplacement");
       this.ui.showMessage(
         "Déplacement impossible",
         "Aucune case accessible pour le déplacement."
@@ -459,9 +382,6 @@ class Game {
       return;
     }
 
-    console.log(
-      `🚶 ${accessibleCells.length} cases accessibles pour ${player.name}`
-    );
     this.ui.highlightAccessibleCells(accessibleCells);
   }
 
@@ -469,7 +389,6 @@ class Game {
     const targets = this.arena.getAttackableTargets(player);
 
     if (targets.length === 0) {
-      console.log("❌ Aucune cible à portée pour l'attaque");
       let message = "Aucune cible à portée.";
       
       switch (player.heroType) {
@@ -493,13 +412,11 @@ class Game {
       return;
     }
 
-    console.log(`⚔️ ${targets.length} cibles à portée pour ${player.name}`);
     this.ui.highlightAttackableTargets(targets);
   }
 
   handleSpecialAction(player) {
     if (!player.canUseSpecial()) {
-      console.log("❌ Pouvoir spécial en cooldown");
       this.ui.showMessage(
         "Pouvoir indisponible",
         `Le pouvoir spécial sera disponible dans ${player.specialCooldown} tour(s).`
@@ -507,23 +424,39 @@ class Game {
       return;
     }
 
-    console.log(`✨ ${player.name} utilise son pouvoir spécial`);
+    if (player.heroType === "chevalier") {
+      const targets = this.arena.getAttackableTargets(player);
+      if (targets.length === 0) {
+        this.ui.showMessage(
+          "Pouvoir impossible",
+          "Le Chevalier doit être adjacent à une cible pour utiliser son Cri de Guerre."
+        );
+        return;
+      }
+    }
+
+    if (player.heroType === "sorcier") {
+      const plusZone = this.arena.getPlusShapedZone(player.position.row, player.position.col, 3);
+      this.ui.highlightPlusZone(plusZone);
+      this.executeSpecialPower(player);
+      return;
+    }
+
     this.executeSpecialPower(player);
   }
 
   handleDefendAction(player) {
-    player.defend();
-    console.log(`🛡️ ${player.name} se défend`);
+    const defenseValue = player.heroType === "chevalier" ? 10 : 5;
+    player.defend(defenseValue);
     this.ui.showMessage(
       "Défense activée",
-      `${player.name} se met en position défensive. Les dégâts du prochain tour seront réduits.`,
+      `${player.name} se met en position défensive.\nLes dégâts du prochain tour seront réduits de ${defenseValue} points.`,
       () => this.endTurn()
     );
   }
 
   handleDodgeAction(player) {
     if (!player.canDodge()) {
-      console.log("❌ Seul le ninja peut esquiver");
       this.ui.showMessage(
         "Action impossible",
         "Seul le ninja peut utiliser l'esquive."
@@ -533,12 +466,6 @@ class Game {
 
     const diceRoll = Math.floor(Math.random() * 6) + 1;
     const success = diceRoll >= 4;
-
-    console.log(
-      `💨 ${player.name} tente d'esquiver: ${diceRoll} - ${
-        success ? "Réussi" : "Échoué"
-      }`
-    );
 
     this.ui.showMessage(
       "Tentative d'esquive",
@@ -557,27 +484,98 @@ class Game {
     if (!action) return;
 
     const currentPlayer = this.getCurrentPlayer();
-    console.log(`🖱️ Clic sur cellule (${row}, ${col}) - Action: ${action}`);
 
     if (action === "move") {
       this.executeMove(currentPlayer, row, col);
     } else if (action === "attack") {
-      this.executeAttack(currentPlayer, row, col);
+      const targetCell = this.arena.getCellAt(row, col);
+      const target = targetCell ? targetCell.player : null;
+
+      if (!target) {
+        this.ui.showMessage(
+          "Attaque impossible",
+          "Aucune cible à cette position."
+        );
+        return;
+      }
+
+      const isAttackable = this.ui.attackableTargets.includes(target);
+
+      if (!isAttackable) {
+        let message = "Cette cible n'est pas à portée d'attaque.";
+        
+        if (currentPlayer.heroType === "ninja") {
+          message = "Cette cible n'est pas à portée du Ninja.\n\n" +
+                   "Options d'attaque du Ninja :\n" +
+                   "- Attaque de base : cible adjacente (1 case)\n" +
+                   "- Attaque spéciale : cible à 3 cases de distance\n" +
+                   "  • En ligne droite (3 cases)\n" +
+                   "  • En L (2 cases + 1 case)\n" +
+                   "Le chemin doit être libre d'obstacles.";
+        }
+        
+        this.ui.showMessage("Cible hors de portée", message);
+        return;
+      }
+
+      if (currentPlayer.heroType === "ninja") {
+        const deltaRow = row - currentPlayer.position.row;
+        const deltaCol = col - currentPlayer.position.col;
+        const distance = Math.abs(deltaRow) + Math.abs(deltaCol);
+
+        if (distance > 1) {
+          const attackPosition = this.arena.getNinjaAttackPosition(
+            currentPlayer.position.row,
+            currentPlayer.position.col,
+            row,
+            col
+          );
+
+          if (!attackPosition) {
+            this.ui.showMessage(
+              "Attaque impossible",
+              "Le chemin vers la cible est bloqué. Le Ninja a besoin d'un chemin libre pour se déplacer et attaquer."
+            );
+            return;
+          }
+
+          const moveSuccess = this.arena.movePlayer(
+            currentPlayer,
+            attackPosition.row,
+            attackPosition.col
+          );
+
+          if (!moveSuccess) {
+            this.ui.showMessage(
+              "Attaque impossible",
+              "Le Ninja ne peut pas atteindre une position d'attaque valide. Vérifiez que le chemin est libre."
+            );
+            return;
+          }
+
+          this.ui.updateArenaDisplay(this.arena);
+        }
+      }
+
+      this.executeAttack(currentPlayer, target);
+      
+      this.ui.clearHighlights();
+      this.ui.updateArenaDisplay(this.arena);
+      
+      if (this.checkGameEnd()) {
+        this.endGame();
+      } else {
+        this.endTurn();
+      }
     }
   }
 
   executeMove(player, row, col) {
-    console.log(
-      `🎯 Tentative d'exécution du mouvement: ${player.name} vers (${row}, ${col})`
-    );
-
-    // Vérifier que la cellule est dans les cases accessibles calculées
     const isAccessible = this.ui.accessibleCells.some(
       (cell) => cell.row === row && cell.col === col
     );
 
     if (!isAccessible) {
-      console.log("❌ Mouvement invalide - case non accessible selon l'UI");
       this.ui.showMessage(
         "Case non accessible",
         "Cette case n'est pas accessible selon les règles de déplacement de votre héros."
@@ -585,23 +583,22 @@ class Game {
       return;
     }
 
-    // Tentative de déplacement
     const moveSuccess = this.arena.movePlayer(player, row, col);
 
     if (moveSuccess) {
       this.ui.updateArenaDisplay(this.arena);
       this.ui.clearHighlights();
 
-      console.log(`✅ ${player.name} se déplace vers (${row}, ${col})`);
+      const logMessage = `🚶 ${player.name} se déplace vers (${row + 1}, ${col + 1})`;
+      console.log(logMessage);
+      this.ui.addLogEntry(logMessage);
+      
       this.ui.showMessage(
         "Déplacement réussi",
-        `${player.name} s'est déplacé vers la position (${row + 1}, ${
-          col + 1
-        }).`,
+        `${player.name} s'est déplacé vers la position (${row + 1}, ${col + 1}).`,
         () => this.endTurn()
       );
     } else {
-      console.log("❌ Échec du déplacement");
       this.ui.showMessage(
         "Déplacement échoué",
         "Le déplacement n'a pas pu être effectué. Veuillez réessayer."
@@ -609,202 +606,161 @@ class Game {
     }
   }
 
-  executeAttack(player, row, col) {
-    const targetCell = this.arena.getCellAt(row, col);
-    const target = targetCell ? targetCell.player : null;
+  executeAttack(attacker, target) {
+    if (!attacker || !target) return false;
 
-    if (!target) {
-      console.log("❌ Aucune cible à cette position");
-      this.ui.showMessage(
-        "Attaque impossible",
-        "Aucune cible à cette position."
-      );
-      return;
-    }
+    this.ui.showDiceRollAnimation(() => {
+      const diceRoll = Math.floor(Math.random() * 6) + 1;
+      let damage = 0;
 
-    const isAttackable = this.ui.attackableTargets.includes(target);
+      switch (diceRoll) {
+        case 1:
+        case 2:
+          damage = 0;
+          break;
+        case 3:
+        case 4:
+        case 5:
+          damage = 15;
+          break;
+        case 6:
+          damage = 30;
+          break;
+      }
 
-    if (!isAttackable) {
-      console.log("❌ Cible hors de portée");
-      let message = "Cette cible n'est pas à portée d'attaque.";
+      target.takeDamage(damage);
+      const logMessage = `⚔️ ${attacker.name} inflige ${damage} dégâts à ${target.name} (Dé: ${diceRoll})`;
+      console.log(logMessage);
+      this.ui.addLogEntry(logMessage);
       
-      if (player.heroType === "ninja") {
-        message = "Cette cible n'est pas à portée du Ninja.\n\n" +
-                 "Options d'attaque du Ninja :\n" +
-                 "- Attaque de base : cible adjacente (1 case)\n" +
-                 "- Attaque spéciale : cible à 3 cases de distance\n" +
-                 "  • En ligne droite (3 cases)\n" +
-                 "  • En L (2 cases + 1 case)\n" +
-                 "Le chemin doit être libre d'obstacles.";
-      }
-      
-      this.ui.showMessage("Cible hors de portée", message);
-      return;
-    }
-
-    // Gestion du déplacement automatique du Ninja avant l'attaque
-    if (player.heroType === "ninja") {
-      const deltaRow = row - player.position.row;
-      const deltaCol = col - player.position.col;
-      const distance = Math.abs(deltaRow) + Math.abs(deltaCol);
-
-      if (distance > 1) {
-        console.log(`🥷 Tentative d'attaque spéciale du Ninja à distance ${distance}`);
-
-        // Calculer la position d'attaque pour le Ninja
-        const attackPosition = this.arena.getNinjaAttackPosition(
-          player.position.row,
-          player.position.col,
-          row,
-          col
-        );
-
-        if (!attackPosition) {
-          console.log("❌ Position d'attaque invalide pour le Ninja");
-          this.ui.showMessage(
-            "Attaque impossible",
-            "Le chemin vers la cible est bloqué. Le Ninja a besoin d'un chemin libre pour se déplacer et attaquer."
-          );
-          return;
-        }
-
-        // Déplacer le Ninja à la position d'attaque
-        const moveSuccess = this.arena.movePlayer(
-          player,
-          attackPosition.row,
-          attackPosition.col
-        );
-
-        if (!moveSuccess) {
-          console.log("❌ Déplacement du Ninja impossible");
-          this.ui.showMessage(
-            "Attaque impossible",
-            "Le Ninja ne peut pas atteindre une position d'attaque valide. Vérifiez que le chemin est libre."
-          );
-          return;
-        }
-
-        this.ui.updateArenaDisplay(this.arena);
-        console.log(`🥷 ${player.name} s'est déplacé en (${attackPosition.row}, ${attackPosition.col}) avant d'attaquer`);
-      }
-    }
-
-    console.log(`⚔️ ${player.name} attaque ${target.name}`);
-    this.performAttack(player, target);
-  }
-
-  performAttack(attacker, target) {
-    const diceRoll = Math.floor(Math.random() * 6) + 1;
-    let damage = 0;
-    let message = `⚔️ ${attacker.name} attaque ${target.name} !\n\n🎲 Dé: ${diceRoll} - `;
-
-    // Règles spécifiques pour le Sorcier
-    if (attacker.heroType === "sorcier") {
-      if (diceRoll <= 2) {
-        message += "❌ Échec !";
-      } else if (diceRoll <= 5) {
-        damage = attacker.attackDamage;
-        message += `✅ Touché ! ${damage} dégâts.`;
+      let message = `🎲 Dé: ${diceRoll}\n\n`;
+      if (damage > 0) {
+        message += `${attacker.name} inflige ${damage} dégâts à ${target.name}`;
       } else {
-        damage = attacker.attackDamage * 2;
-        message += `💥 Coup critique ! ${damage} dégâts.`;
+        message += `${attacker.name} rate son attaque !`;
       }
-    } else {
-      // Règles pour le Chevalier et le Ninja
-      if (diceRoll <= 2) {
-        message += "❌ Échec !";
-      } else if (diceRoll <= 5) {
-        damage = attacker.attackDamage;
-        message += `✅ Touché ! ${damage} dégâts.`;
-      } else {
-        damage = attacker.attackDamage * 1.5;
-        message += `💥 Coup critique ! ${damage} dégâts.`;
-      }
-    }
 
-    if (damage > 0) {
-      const actualDamage = target.takeDamage(damage);
-      message += `\n\n${target.name} perd ${actualDamage} PV.`;
+      this.ui.showMessage("Résultat de l'attaque", message);
 
       if (!target.isAlive()) {
-        message += `\n💀 ${target.name} est éliminé !`;
-        this.arena.removePlayer(target);
-        console.log(`💀 ${target.name} a été éliminé`);
+        const eliminationMessage = `💀 ${target.name} a été éliminé !`;
+        console.log(eliminationMessage);
+        this.ui.addLogEntry(eliminationMessage);
+        this.ui.showMessage("Élimination", eliminationMessage);
       }
-    }
 
-    this.ui.clearHighlights();
-    this.ui.updateArenaDisplay(this.arena);
-
-    this.ui.showMessage("Résultat de l'attaque", message, () => {
-      if (this.checkGameEnd()) {
-        this.endGame();
-      } else {
-        this.endTurn();
-      }
+      this.ui.updateArenaDisplay(this.arena);
     });
+
+    return true;
   }
 
   executeSpecialPower(player) {
     if (!player.useSpecial()) return;
 
-    // Show dice roll animation in the UI
     this.ui.showDiceRollAnimation(() => {
       const diceRoll = Math.floor(Math.random() * 6) + 1;
-      let message = `✨ ${player.name} utilise son pouvoir spécial !\n\n🎲 Dé: ${diceRoll} - `;
+      let message = `✨ ${player.name} utilise son pouvoir spécial !\n\n`;
       let success = false;
 
-      // Check if the special attack succeeds based on dice roll
       switch (player.heroType) {
         case "chevalier":
           success = diceRoll >= 3;
+          message += `🎲 Dé: ${diceRoll}\n\n`;
           if (success) {
-            player.attackDamage += 15;
-            message += "✅ Réussi ! Dégâts augmentés pour le prochain tour !";
-            console.log(`⚔️ ${player.name} augmente ses dégâts`);
+            const targets = this.arena.getAttackableTargets(player);
+            if (targets.length > 0) {
+              const target = targets[0];
+              const damage = 45;
+              target.takeDamage(damage);
+              const logMessage = `⚔️ ${player.name} inflige ${damage} dégâts à ${target.name} (Cri de Guerre)`;
+              console.log(logMessage);
+              this.ui.addLogEntry(logMessage);
+              this.ui.updateArenaDisplay(this.arena);
+              
+              if (!target.isAlive()) {
+                const eliminationMessage = `💀 ${target.name} a été éliminé !`;
+                console.log(eliminationMessage);
+                this.ui.addLogEntry(eliminationMessage);
+                message += `\n${eliminationMessage}`;
+              }
+            }
           } else {
-            message += "❌ Échoué ! Le pouvoir spécial n'a pas d'effet.";
+            message += "❌ Le Cri de Guerre échoue !";
           }
           break;
 
         case "ninja":
           success = diceRoll >= 4;
+          message += `🎲 Dé: ${diceRoll}\n\n`;
           if (success) {
             const targets = this.arena.getAttackableTargets(player);
             if (targets.length > 0) {
               const target = targets[0];
-              message += "✅ Réussi ! Double attaque !";
-              console.log(`⚡ ${player.name} effectue une double attaque`);
-              this.performAttack(player, target);
-              if (target.isAlive()) {
-                this.performAttack(player, target);
+              let damage = 0;
+
+              switch (diceRoll) {
+                case 1:
+                case 2:
+                  damage = 0;
+                  break;
+                case 3:
+                case 4:
+                case 5:
+                  damage = 15;
+                  break;
+                case 6:
+                  damage = 30;
+                  break;
               }
-              return;
-            } else {
-              message += "❌ Aucune cible à portée !";
+
+              target.takeDamage(damage);
+              target.takeDamage(damage);
+              
+              const logMessage = `⚔️ ${player.name} inflige ${damage * 2} dégâts à ${target.name} (Double attaque - Dé: ${diceRoll})`;
+              console.log(logMessage);
+              this.ui.addLogEntry(logMessage);
+              
+              if (!target.isAlive()) {
+                const eliminationMessage = `💀 ${target.name} a été éliminé !`;
+                console.log(eliminationMessage);
+                this.ui.addLogEntry(eliminationMessage);
+                message += `\n${eliminationMessage}`;
+              }
+              
+              this.ui.updateArenaDisplay(this.arena);
             }
           } else {
-            message += "❌ Échoué ! Le pouvoir spécial n'a pas d'effet.";
+            message += "❌ La Double attaque échoue !";
           }
           break;
 
         case "sorcier":
-          success = diceRoll >= 3;
-          if (success) {
-            const allTargets = this.arena
-              .getAlivePlayers()
-              .filter((p) => p !== player);
-            message += "✅ Réussi ! Tempête magique !";
-            console.log(`🌪️ ${player.name} lance une tempête magique`);
-            allTargets.forEach((target) => {
-              const damage = 20;
-              target.takeDamage(damage);
-              message += `\n⚡ ${target.name} subit ${damage} dégâts !`;
+          const plusZone = this.arena.getPlusShapedZone(player.position.row, player.position.col, 3);
+          const affectedTargets = this.arena.getPlayersInZone(plusZone);
+          
+          if (affectedTargets.length > 0) {
+            affectedTargets.forEach((affectedTarget) => {
+              if (affectedTarget !== player) {
+                const damage = 30;
+                affectedTarget.takeDamage(damage);
+                const logMessage = `⚔️ ${player.name} inflige ${damage} dégâts à ${affectedTarget.name} (Tempête magique)`;
+                console.log(logMessage);
+                this.ui.addLogEntry(logMessage);
+                
+                if (!affectedTarget.isAlive()) {
+                  const eliminationMessage = `💀 ${affectedTarget.name} a été éliminé !`;
+                  console.log(eliminationMessage);
+                  this.ui.addLogEntry(eliminationMessage);
+                  message += `\n${eliminationMessage}`;
+                }
+              }
             });
-            this.ui.updateArenaDisplay(this.arena);
           } else {
-            message += "❌ Échoué ! Le pouvoir spécial n'a pas d'effet.";
+            message += "❌ Aucune cible dans la zone d'effet !";
           }
+          
+          this.ui.updateArenaDisplay(this.arena);
           break;
       }
 
@@ -821,19 +777,14 @@ class Game {
   playAITurn() {
     const aiPlayer = this.getCurrentPlayer();
 
-    console.log(`🤖 ${aiPlayer.name} (PC) réfléchit...`);
-
     setTimeout(() => {
-      // D'abord essayer d'attaquer si possible
       const targets = this.arena.getAttackableTargets(aiPlayer);
 
       if (targets.length > 0) {
-        // Choisir la cible la plus faible
         const weakestTarget = targets.reduce((weakest, current) => {
           return current.hp < weakest.hp ? current : weakest;
         }, targets[0]);
 
-        // Pour le Ninja, déplacer vers la cible avant d'attaquer
         if (aiPlayer.heroType === "ninja") {
           const targetPos = weakestTarget.position;
           const attackPosition = this.arena.getNinjaAttackPosition(
@@ -852,26 +803,18 @@ class Game {
 
             if (moveSuccess) {
               this.ui.updateArenaDisplay(this.arena);
-              console.log(`🥷 ${aiPlayer.name} se déplace vers la cible avant d'attaquer`);
             }
           }
         }
 
-        console.log(`🎯 ${aiPlayer.name} attaque ${weakestTarget.name}`);
-        this.performAttack(aiPlayer, weakestTarget);
+        this.executeAttack(aiPlayer, weakestTarget);
       } else {
-        // Sinon, essayer de se déplacer stratégiquement
         const accessibleCells = this.arena.getAccessibleCells(aiPlayer);
         
         if (accessibleCells.length > 0) {
-          // Trouver la meilleure position pour se rapprocher d'une cible
           const bestMove = this.findBestMove(aiPlayer, accessibleCells);
           
           if (bestMove) {
-            console.log(
-              `🚶 ${aiPlayer.name} tente de se déplacer vers (${bestMove.row}, ${bestMove.col})`
-            );
-
             const moveSuccess = this.arena.movePlayer(
               aiPlayer,
               bestMove.row,
@@ -880,10 +823,6 @@ class Game {
 
             if (moveSuccess) {
               this.ui.updateArenaDisplay(this.arena);
-              console.log(
-                `✅ ${aiPlayer.name} s'est déplacé vers (${bestMove.row}, ${bestMove.col})`
-              );
-
               this.ui.showMessage(
                 "Déplacement",
                 `${aiPlayer.name} se déplace vers la position (${
@@ -892,15 +831,12 @@ class Game {
                 () => this.endTurn()
               );
             } else {
-              console.log("❌ Échec du déplacement de l'IA");
               this.endTurn();
             }
           } else {
-            console.log("❌ Aucun mouvement stratégique trouvé");
             this.endTurn();
           }
         } else {
-          console.log("❌ Aucune case accessible pour l'IA");
           this.endTurn();
         }
       }
@@ -908,44 +844,33 @@ class Game {
   }
 
   findBestMove(player, accessibleCells) {
-    // Trouver la cible la plus proche
     const targets = this.players.filter(p => p !== player && p.isAlive());
     if (targets.length === 0) return accessibleCells[0];
 
     let bestMove = null;
     let shortestDistance = Infinity;
 
-    // Filtrer les mouvements valides selon le type de héros
     const validMoves = accessibleCells.filter(cell => {
       const deltaRow = Math.abs(cell.row - player.position.row);
       const deltaCol = Math.abs(cell.col - player.position.col);
       
-      // Vérifier que le mouvement est dans une seule direction (pas en diagonale)
       if (deltaRow > 0 && deltaCol > 0) return false;
       
-      // Vérifier la distance maximale selon le type de héros
       switch (player.heroType) {
         case "chevalier":
-          // Le chevalier ne peut se déplacer que d'une case dans une direction cardinale
           return (deltaRow === 1 && deltaCol === 0) || (deltaRow === 0 && deltaCol === 1);
         case "ninja":
-          // Le ninja peut se déplacer de 2 cases dans une direction cardinale
           return (deltaRow === 2 && deltaCol === 0) || (deltaRow === 0 && deltaCol === 2);
         case "sorcier":
-          // Le sorcier ne peut se déplacer que d'une case dans une direction cardinale
           return (deltaRow === 1 && deltaCol === 0) || (deltaRow === 0 && deltaCol === 1);
         default:
           return false;
       }
     });
 
-    if (validMoves.length === 0) {
-      console.log("❌ Aucun mouvement valide trouvé pour l'IA");
-      return null;
-    }
+    if (validMoves.length === 0) return null;
 
     for (const cell of validMoves) {
-      // Calculer la distance minimale vers toutes les cibles
       const minDistance = Math.min(
         ...targets.map(target => 
           Math.abs(cell.row - target.position.row) + 
@@ -953,7 +878,6 @@ class Game {
         )
       );
 
-      // Si cette position nous rapproche d'une cible
       if (minDistance < shortestDistance) {
         shortestDistance = minDistance;
         bestMove = cell;
@@ -967,8 +891,6 @@ class Game {
     this.ui.resetActionButtons();
     this.ui.disableAllActions();
     this.ui.clearHighlights();
-
-    // Réactiver les interactions au cas où elles seraient désactivées
     this.ui.enablePlayerInteractions();
 
     const currentPlayer = this.getCurrentPlayer();
@@ -981,7 +903,6 @@ class Game {
       currentPlayer.attackDamage > 25
     ) {
       currentPlayer.attackDamage = 25;
-      console.log(`🗡️ Bonus de dégâts du chevalier expiré`);
     }
 
     const alivePlayers = this.arena.getAlivePlayers();
@@ -989,15 +910,7 @@ class Game {
       p.isAlive()
     );
 
-    console.log(
-      `📊 Joueurs vivants: ${alivePlayers.length}, Joueurs ayant joué: ${alivePlayersWhoPlayed.length}`
-    );
-
     if (alivePlayersWhoPlayed.length >= alivePlayers.length) {
-      console.log(
-        "🔄 Tous les joueurs ont joué, nouveau tour avec lancement de dés"
-      );
-
       setTimeout(() => {
         this.ui.showNewRoundSection();
       }, this.turnTransitionDelay);
@@ -1013,10 +926,7 @@ class Game {
       this.currentPlayerIndex
     );
 
-    if (currentOrderIndex === -1) {
-      console.error("❌ Joueur actuel non trouvé dans l'ordre horaire");
-      return;
-    }
+    if (currentOrderIndex === -1) return;
 
     const firstPlayerOrderIndex = this.clockwiseOrder.indexOf(
       this.currentTurnFirstPlayer
@@ -1036,9 +946,6 @@ class Game {
       ) {
         this.currentPlayerIndex = nextPlayerIndex;
         nextPlayerFound = true;
-        console.log(
-          `➡️ Passage au joueur suivant (sens horaire): ${nextPlayer.name}`
-        );
         this.startTurn();
         break;
       }
@@ -1050,10 +957,6 @@ class Game {
         break;
       }
     }
-
-    if (!nextPlayerFound) {
-      console.log("⚠️ Aucun joueur suivant trouvé dans l'ordre horaire");
-    }
   }
 
   getCurrentPlayer() {
@@ -1063,19 +966,12 @@ class Game {
     ) {
       return this.players[this.currentPlayerIndex];
     }
-    console.error(`❌ Index de joueur invalide: ${this.currentPlayerIndex}`);
     return null;
   }
 
   checkGameEnd() {
     const alivePlayers = this.arena.getAlivePlayers();
-    const gameEnded = alivePlayers.length <= 1;
-
-    if (gameEnded) {
-      console.log("🏁 Fin de partie détectée");
-    }
-
-    return gameEnded;
+    return alivePlayers.length <= 1;
   }
 
   endGame() {
@@ -1083,7 +979,6 @@ class Game {
     const winner = this.arena.getAlivePlayers()[0];
 
     if (winner) {
-      console.log(`🏆 Victoire de ${winner.name}`);
       this.ui.showMessage(
         "🏆 Victoire !",
         `${winner.name} (${winner.heroType}) remporte la partie !\n\nFélicitations !`,
@@ -1094,7 +989,6 @@ class Game {
         }
       );
     } else {
-      console.log("⚔️ Match nul");
       this.ui.showMessage(
         "⚔️ Match nul",
         "Tous les héros sont tombés au combat !",

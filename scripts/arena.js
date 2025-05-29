@@ -493,6 +493,46 @@ class Arena {
     }
     return null;
   }
+
+  getPlusShapedZone(centerRow, centerCol, range) {
+    const zone = [];
+    
+    // Add center cell
+    zone.push({ row: centerRow, col: centerCol });
+    
+    // Add cells in each direction
+    for (let i = 1; i <= range; i++) {
+      // Up
+      if (centerRow - i >= 0) {
+        zone.push({ row: centerRow - i, col: centerCol });
+      }
+      // Down
+      if (centerRow + i < this.size) {
+        zone.push({ row: centerRow + i, col: centerCol });
+      }
+      // Left
+      if (centerCol - i >= 0) {
+        zone.push({ row: centerRow, col: centerCol - i });
+      }
+      // Right
+      if (centerCol + i < this.size) {
+        zone.push({ row: centerRow, col: centerCol + i });
+      }
+    }
+    
+    return zone;
+  }
+
+  getPlayersInZone(zone) {
+    const players = [];
+    zone.forEach(cell => {
+      const cellContent = this.getCellAt(cell.row, cell.col);
+      if (cellContent && cellContent.player && cellContent.player.isAlive()) {
+        players.push(cellContent.player);
+      }
+    });
+    return players;
+  }
 }
 
 export { Arena };
