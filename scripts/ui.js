@@ -410,6 +410,16 @@ class UI {
       detail: { hero: this.selectedHero },
     });
     document.dispatchEvent(event);
+
+    // Deselect the hero after confirmation
+    document.querySelectorAll(".hero-card").forEach((c) => c.classList.remove("selected"));
+    this.selectedHero = null;
+
+    // Disable the confirm button
+    const confirmBtn = document.getElementById("confirm-hero");
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+    }
   }
 
   showDiceOrderSection(playerName, isTieBreaker = false) {
